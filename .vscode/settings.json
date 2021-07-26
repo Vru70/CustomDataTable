@@ -4,9 +4,17 @@
     "**/bower_components": true,
     "**/.sfdx": true
   },
-  "editor.formatOnSave": true,
   "files.autoGuessEncoding": true,
   "files.trimTrailingWhitespace": true,
   "files.simpleDialog.enable": true,
-  "git-graph.repository.useMailmap": true
+  "git-graph.repository.useMailmap": true,
+  "git-graph.repository.sign.tags": true,
+  "git-graph.repository.sign.commits": true,
+  "git-graph.repository.commits.order": "author-date",
+  "git-graph.openToTheRepoOfTheActiveTextEditorDocument": true,
+  "git-graph.repository.commits.showSignatureStatus": true,
+  "SFDoc.DateFormat": "DD-MM-YYYY",
+  "SFDoc.IncludParameterTypeInMethodHeader": true,
+  "workbench.editor.labelFormat": "medium",
+  "html.format.wrapAttributes": "force"
 }
