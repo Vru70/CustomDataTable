@@ -1,0 +1,12 @@
+{
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/bower_components": true,
+    "**/.sfdx": true
+  },
+  "editor.formatOnSave": true,
+  "files.autoGuessEncoding": true,
+  "files.trimTrailingWhitespace": true,
+  "files.simpleDialog.enable": true,
+  "git-graph.repository.useMailmap": true
+}
