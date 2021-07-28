@@ -1,3 +1,12 @@
-import { LightningElement } from 'lwc';
+import LightningDatatable from 'lightning/datatable';
+import DatatablePicklistTemplate from "./picklist-Template.html";
 
-export default class ExtendedDataTable extends LightningElement {}
+export default class ExtendedDatatable extends LightningDatatable {
+    static customTypes = {  
+        picklist: {
+            template: DatatablePicklistTemplate,
+            typeAttributes: ['label', 'placeholder', 'options', 'value','context', 'apiname'],
+            standardCellLayout: true,
+        },
+    };
+}
