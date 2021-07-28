@@ -1,0 +1,26 @@
+<!--
+  @author            : Vrushabh Uprikar
+  @last modified on  : 27-07-2021
+  @last modified by  : Vrushabh Uprikar
+-->
+<template>
+    <lightning-card>
+      <div class="slds-p-left_medium">
+            <lightning-button  label="Add" variant="brand" onclick={addRow}
+                              class="slds-float_left">
+            </lightning-button>&nbsp;
+      </div>
+      <div class="slds-m-around_medium">
+        <c-extended-datatable
+          key-field="Id"
+          data={records}
+          columns={columns}
+          hide-checkbox-column
+          draft-values={draftValues}
+          onsave={handleSave}
+          oncellchange={handleCellChange}
+          onpicklistchanged={picklistChanged}>
+        </c-extended-datatable>
+      </div>
+    </lightning-card>
+</template>
