@@ -1,13 +1,13 @@
 /**
  * @File Name          : accountDataTable.js
  * @Description        :
- * @Author             :
+ * @Author             : Vrushabh Uprikar
  * @Group              :
  * @Last Modified By   : Vrushabh Uprikar
- * @Last Modified On   : 27-07-2021
+ * @Last Modified On   : 28-07-2021
  * @Modification Log   :
  * Ver       Date            Author      		    Modification
- * 1.0    (DD-MM-YYYY)                               Initial Version
+ * 1.0    (DD-MM-YYYY)   Vrushabh Uprikar          Initial Version
  **/
 public with sharing class AccountControllerEdit
 {

@@ -9,27 +9,45 @@
  * Ver       Date            Author      		    Modification
  * 1.0    (DD-MM-YYYY)                               Initial Version
  **/
- import { LightningElement, wire} from 'lwc';
+ import { LightningElement, wire, track, api} from 'lwc';
+
+ import { reduceErrors } from 'c/ldsUtils';
+ import getFieldSetAndRecords from '@salesforce/apex/picklistDatatableEditContoller.getFieldSetAndRecords';
+
  import { refreshApex } from '@salesforce/apex';
  import { ShowToastEvent } from 'lightning/platformShowToastEvent';
- import fetchAccounts from '@salesforce/apex/AccountControllerEdit.fetchAccounts';
  import updateAccounts from '@salesforce/apex/AccountControllerEdit.updateAccounts';
  import getPicklistOptions from '@salesforce/apex/AccountControllerEdit.getPicklistOptions';
  import { getObjectInfo } from 'lightning/uiObjectInfoApi';
 
-
- const column=[
-     { "label" : "Name", "apiName" : "Name" ,"fieldType":"text","objectName":"Account", "fieldName": "Name", editable: true },
-     { "label" : "Phone", "apiName" : "Phone" ,"fieldType":"text","type":"phone","objectName":"Account","fieldName": "Phone", editable: true },
-     { "label" : "Fax", "apiName" : "Fax" ,"fieldType":"text","type":"Fax","objectName":"Account","fieldName": "Fax", editable: true },
- ];
+//  const column=[
+//      { "label" : "Name", "apiName" : "Name" ,"fieldType":"text","objectName":"Account", "fieldName": "Name", editable: true },
+//      { "label" : "Phone", "apiName" : "Phone" ,"fieldType":"text","type":"phone","objectName":"Account","fieldName": "Phone", editable: true },
+//      { "label" : "Fax", "apiName" : "Fax" ,"fieldType":"text","type":"Fax","objectName":"Account","fieldName": "Fax", editable: true },
+//      { "label" : "Total Spending", "apiName" : "Total_Spending__c" ,"fieldType":"text","objectName":"Account","fieldName": "Total_Spending", editable: true },
+//  ];
 
  export default class AccountDatatable extends LightningElement
  {
-     records=[];
+
+    @track allData = []; // Datatable
+    allDataOrgCopy = []; // DatatableOrignalCpy
+    @track columns ;
+
+    @track fieldOption = '';
+    @track fieldOptionJSON = []; // list of fields option for combobox
+    @track FieldsValue; // default value of combobox
+    @track fieldType; // data type
+
+    @api SFDCobjectApiName;
+    @api fieldSetName;
+
+    fieldName;
+
+     /*records=[];
      wiredRecords;
      error;
-     columns = column;
+
      keyIndex = 0;
      draftValues = [];
      picklistval;
@@ -42,30 +60,56 @@
          Phone:"",
          Fax: "",
          Industry: "",
-     }
+     }*/
 
 
-     @wire(fetchAccounts)
-     wiredAccount({ error, data })
+     connectedCallback()
      {
-         if (data)
-         {
-             this.records = data;
-             this.wiredRecords = data; // track the provisioned value
-             this.error = undefined;
-             console.log('Data', data);
+        getFieldSetAndRecords({
+            strObjectApiName: this.SFDCobjectApiName,
+            strfieldSetName: this.fieldSetName
+        })
+            .then(data => {
 
-         } else if (error)
-         {
-             this.error = error;
-             this.records = undefined;
-         }
+                let objStr = JSON.parse(data);
 
-     }
+                let listOfFields = JSON.parse(Object.values(objStr)[1]);
+
+                //retrieve listOfRecords from the map
+                let listOfRecords = JSON.parse(Object.values(objStr)[0]);
+
+                let items = []; //local array to prepare columns
+                listOfFields.map(element => {
+                        items = [...items, {
+                            label: element.fieldPath,
+                            apiName : element.fieldPath ,
+                            type: element.type,
+                            fieldType: 'text',
+                            objectName: this.SFDCobjectApiName,
+                            fieldName: element.label.replace(" ", "_"),
+                            editable: true,
+                        }];
+                });
+
+                var xx = JSON.stringify(listOfRecords);
+                this.allData = JSON.parse(xx);
+                this.allDataOrgCopy = JSON.parse(xx);
+                this.columns = items;
+                console.log('this.columns:', JSON.stringify(this.columns));
+                console.log('this.allData:', JSON.parse(JSON.stringify(this.allData)));
+                this.error = undefined;
+            })
+            .catch(error => {
+                this.error = reduceErrors(error);
+                console.log('this.error', this.error);
+                this.allData = undefined;
+            });
+    }
 
 
  // Picklist change code start Here
-     picklistChanged(event) {
+     picklistChanged(event)
+     {
          try {
              // collect values of piclist and update it to draft value
              let dataRecieved = JSON.parse(JSON.stringify(event.detail.data));
@@ -125,11 +169,12 @@
                  wrapText: true
 
                  };
+                 this.connectedCallback();
 
-                 console.log(this.columns);
+                 console.log('bef'+this.columns);
 
                  this.columns =[...this.columns,colJson]
-                 console.log(this.columns);
+                 console.log('After picistl'+this.columns);
             })
 
             .catch(err=>{
@@ -225,7 +270,8 @@
         console.log(this.acc2);
     }
      // Add row button logic
-     addRow() {
+     addRow()
+     {
          this.acc.Id = this.keyIndex;
          ++this.keyIndex;
          console.log(this.keyIndex);
