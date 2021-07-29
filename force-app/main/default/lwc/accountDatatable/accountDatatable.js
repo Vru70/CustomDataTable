@@ -166,6 +166,7 @@ export default class AccountDatatable extends LightningElement {
 
                 };
                 console.log('bef ' + this.columns);
+                console.log('rep ' + this.columns);
 
                 this.columns = [...this.columns, colJson]
                 console.log('After picistl' +JSON.stringify( this.columns));
