@@ -1,6 +1,6 @@
 /**
  * @author            : Vrushabh Uprikar
- * @last modified on  : 28-07-2021
+ * @last modified on  : 29-07-2021
  * @last modified by  : Vrushabh Uprikar
 **/
 public with sharing class picklistDatatableEditContoller
@@ -39,7 +39,7 @@ public with sharing class picklistDatatableEditContoller
     {
         Type objtype = Type.forName(SFDCobjectApiName);                               // Eg., conatct
         if(!String.isEmpty(fieldData) && !String.isEmpty(SFDCobjectApiName))
-        {
+        { 
             SObject sObj = (SObject)JSON.deserialize(fieldData, objtype);
             System.debug('fieldData : '+fieldData);                                    // '{\"id\":\"0032w00000X6KgxAAF\",\"FirstName\":\"SonuTest1\"}'
             try
