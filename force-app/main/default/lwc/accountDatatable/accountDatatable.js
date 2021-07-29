@@ -17,9 +17,7 @@ import setSObjectRecords from '@salesforce/apex/picklistDatatableEditContoller.s
 
 import { refreshApex } from '@salesforce/apex';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
-import updateAccounts from '@salesforce/apex/AccountControllerEdit.updateAccounts';
 import getPicklistOptions from '@salesforce/apex/AccountControllerEdit.getPicklistOptions';
-import { getObjectInfo } from 'lightning/uiObjectInfoApi';
 
 //  const column=[
 //      { "label" : "Name", "apiName" : "Name" ,"fieldType":"text","objectName":"Account", "fieldName": "Name", editable: true },
@@ -31,8 +29,8 @@ export default class AccountDatatable extends LightningElement {
 
     @track allData = []; // Datatable
     allDataOrgCopy = []; // DatatableOrignalCpy
-    @track columns ;
-
+    @track columns = [];
+    @track copyColumns = [];
     @track fieldOption = '';
     @track fieldOptionJSON = []; // list of fields option for combobox
     @track FieldsValue; // default value of combobox
@@ -74,26 +72,58 @@ export default class AccountDatatable extends LightningElement {
                 let listOfFields = JSON.parse(Object.values(objStr)[1]);
 
                 //retrieve listOfRecords from the map
-                let listOfRecords = JSON.parse(Object.values(objStr)[0]);
+                var listOfRecords = JSON.parse(Object.values(objStr)[0]);
 
-                let items = []; //local array to prepare columns
                 listOfFields.map(element => {
-                    items = [...items, {
-                        label: element.label,
-                        apiName: element.fieldPath,
-                        type: element.type,
-                        fieldType: 'text',
-                        objectName: this.SFDCobjectApiName,
-                        fieldName: element.fieldPath,
-                        editable: true,
-                    }];
-                });
+                    if (element.type == 'picklist' || element.type == "picklist") {
+                        getPicklistOptions({ objectApiName: this.SFDCobjectApiName, fieldApiName: element.fieldPath })
+                            .then(resp => {
+                                var colJson =
+                                {
+                                    fieldName: element.fieldPath,
+                                    label: element.label,
+                                    type: element.type,
+                                    editable: true,
+                                    cellAttributes: { alignment: 'center' },
+                                    typeAttributes: {
+                                        placeholder: element.label,
+                                        options: resp,
+                                        value: {
+                                            fieldName: element.fieldPath
+                                        },
+                                        context: { fieldName: 'Id' },
+                                        apiname: element.fieldPath
+                                    },
+                                    wrapText: true
+                                };
 
+                                this.columns.push(colJson);
+                                console.log(' this.columns' + JSON.stringify(this.columns));
+                            })
+                            .catch(error => {
+                                this.error = reduceErrors(error);
+                                console.log('this.error', this.error);
+                            });
+
+                    } else {
+                        let elm = {
+                            label: element.label,
+                            apiName: element.fieldPath,
+                            type: element.type,
+                            fieldType: 'text',
+                            objectName: this.SFDCobjectApiName,
+                            fieldName: element.fieldPath,
+                            editable: true,
+                        };
+                        this.columns.push(elm);
+                    }
+                    console.log('this.columns Inner :', JSON.stringify(this.columns));
+                });
                 var xx = JSON.stringify(listOfRecords);
                 this.allData = JSON.parse(xx);
                 this.allDataOrgCopy = JSON.parse(xx);
-                this.columns = items;
-                console.log('this.columns:', JSON.stringify(this.columns));
+                //this.columns = items;
+                console.log('this.columns:Outer', JSON.stringify(this.columns));
                 console.log('this.allData:', JSON.parse(JSON.stringify(this.allData)));
                 this.error = undefined;
             })
@@ -103,9 +133,7 @@ export default class AccountDatatable extends LightningElement {
                 this.allData = undefined;
             });
 
-           this.callgetPicklistOptions();
     }
-
 
     // Picklist change code start Here
     picklistChanged(event) {
@@ -115,7 +143,6 @@ export default class AccountDatatable extends LightningElement {
             console.log('Picklist Change Data : ', dataRecieved);
             let fieldApiName = dataRecieved.apiname;
             let ObjectIndex;
-
             ObjectIndex = this.records.findIndex(Item => { return Item.Id === dataRecieved.context });
             console.log(ObjectIndex);
 
@@ -142,82 +169,11 @@ export default class AccountDatatable extends LightningElement {
         }
     }
 
-    callgetPicklistOptions() {
-        getPicklistOptions({ objectApiName: 'Account', fieldApiName: 'Industry' })
-            .then(resp => {
-
-                let tempColumns = [];
-
-                let colJson = {
-                    fieldName: 'Industry',
-                    label: 'Industry',
-                    type: 'picklist',
-                    cellAttributes: { alignment: 'left' },
-                    typeAttributes: {
-                        placeholder: 'Industry',
-                        options: resp,
-                        value: {
-                            fieldName: 'Industry'
-                        },
-                        context: { fieldName: 'Id' },
-                        apiname: 'Industry'
-                    },
-                    wrapText: true
-
-                };
-                console.log('bef ' + this.columns);
-                console.log('rep ' + this.columns);
-
-                this.columns = [...this.columns, colJson]
-                console.log('After picistl' +JSON.stringify( this.columns));
-            })
-
-            .catch(err => {
-                console.log(err)
-            });
-
-        getPicklistOptions({
-            objectApiName: 'Account',
-            fieldApiName: 'SLA__c'
-        })
-            .then(resp => {
-                let colJson = {
-                    fieldName: 'SLA',
-                    label: 'SLA',
-                    type: 'picklist',
-                    cellAttributes: { alignment: 'left' },
-                    typeAttributes: {
-                        placeholder: 'SLA',
-                        options: resp,
-                        value: {
-                            fieldName: 'SLA'
-                        },
-                        context: { fieldName: 'Id' },
-                        apiname: 'SLA__c'
-                    },
-                    wrapText: true
-
-                };
-
-                console.log(this.columns);
-
-                this.columns = [...this.columns, colJson]
-                console.log(this.columns);
-            })
-
-            .catch(err => {
-                console.log(err)
-            });
-
-    }
-
-
-
     // Handlsave event to save Edit draftvalues and Record Insert save button
     handleSave(event) {
         var updatedField = event.detail.draftValues;
-       // const updatedField2 = this.updatedFields;
-        console.log('updatedField'+ JSON.stringify(updatedField));
+        // const updatedField2 = this.updatedFields;
+        console.log('updatedField' + JSON.stringify(updatedField));
         setSObjectRecords({ fieldData: JSON.stringify(updatedField), SFDCobjectApiName: this.SFDCobjectApiName })
             .then(result => {
 
@@ -256,7 +212,7 @@ export default class AccountDatatable extends LightningElement {
 
     }
     handleCellChange(event) {
-        console.log('draft val'+ JSON.stringify(event.detail.draftValues));
+        console.log('draft val' + JSON.stringify(event.detail.draftValues));
         // this.acc2["Name"] = event.detail.draftValues[0]["Name"] != undefined ? event.detail.draftValues[0]["Name"] : this.acc2["Name"];
         // this.acc2["Phone"] = event.detail.draftValues[0]["Phone"] != undefined ? event.detail.draftValues[0]["Phone"] : this.acc2["Phone"];
         // this.acc2["Fax"] = event.detail.draftValues[0]["Fax"] != undefined ? event.detail.draftValues[0]["Fax"] : this.acc2["Fax"];
