@@ -29,7 +29,7 @@ public with sharing class picklistDatatableEditContoller
                 }
             }
             query += 'Id FROM ' + strObjectApiName ;
-            query += ' LIMIT 20 ';
+            query += ' LIMIT 10 ';
 	        //execute query
             List<SObject> lstRecords = Database.query(query);
             //prepare a map which will hold fieldList and recordList and return it
@@ -44,7 +44,7 @@ public with sharing class picklistDatatableEditContoller
 
 
     @AuraEnabled
-    public static String setSObjectRecords(String fieldData, String SFDCobjectApiName)
+    public static String upsertSOBJRecord(String fieldData, String SFDCobjectApiName)
     {
         Type objtype = Type.forName(SFDCobjectApiName);                               // Eg., conatct
         if(!String.isEmpty(fieldData) && !String.isEmpty(SFDCobjectApiName))
