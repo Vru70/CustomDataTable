@@ -59,7 +59,8 @@ export default class AccountDatatable extends LightningElement {
     }*/
 
 
-    connectedCallback() {
+    connectedCallback()
+    {
         getFieldSetAndRecords({
             strObjectApiName: this.SFDCobjectApiName,
             strfieldSetName: this.fieldSetName
@@ -70,18 +71,64 @@ export default class AccountDatatable extends LightningElement {
 
                 let listOfFields = JSON.parse(Object.values(objStr)[2]);
                 console.log('listOfFields:', JSON.stringify(listOfFields)); // Fields
-                //retrieve listOfRecords from the map
+
                 var listOfRecords = JSON.parse(Object.values(objStr)[1]);
                 console.log('listOfRecords:', JSON.stringify(listOfRecords)); // Data
-                // piclist values
-                var pickListValues = JSON.parse(Object.values(objStr)[0]); // Piclist
-                console.log('pickListValues:', JSON.stringify(pickListValues));
+
+                var pickListValues = JSON.parse(Object.values(objStr)[0]);
+                console.log('pickListValues:', JSON.stringify(pickListValues)); // Picklist
+                var pickListArray = [];
+                pickListValues.forEach(pic => {
+                    pic.map(elem => {
+                        pickListArray.push(elem);
+                    });
+                });
+                // console.log('pickListArray:', pickListArray);
                 var xx = JSON.stringify(listOfRecords);
                 this.allData = JSON.parse(xx);
                 this.allDataOrgCopy = JSON.parse(xx);
 
-                listOfFields.map(element => {
-                    if (element.type != 'picklist' || element.type != "picklist") {
+                await listOfFields.map(element => {
+
+                    if (element.type == 'picklist' || element.type == "picklist")
+                    {
+                        let opt = []; // options
+                        pickListValues.forEach(pic => {
+                            pic.forEach(elem => {
+                                if (element.fieldPath == elem.fieldApi)
+                                {
+                                    let var1 =
+                                    {
+                                        value: elem.value,
+                                        label: elem.label
+                                    };
+                                    opt.push(var1);
+                                }
+                            });
+                        });
+
+                        let colJson =
+                        {
+                            fieldName: element.fieldPath,
+                            label: element.label,
+                            type: element.type,
+                            editable: true,
+                            cellAttributes: { alignment: 'center' },
+                            typeAttributes: {
+                                placeholder: element.label,
+                                options: opt,
+                                value: {
+                                    fieldName: element.fieldPath
+                                },
+                                context: { fieldName: 'Id' },
+                                apiname: element.fieldPath
+                            },
+                            wrapText: true
+                        };
+                        this.columns.push('colJson'+colJson);
+
+                    } else
+                     {
                         let elm = {
                             label: element.label,
                             apiName: element.fieldPath,
@@ -91,17 +138,12 @@ export default class AccountDatatable extends LightningElement {
                             fieldName: element.fieldPath,
                             editable: true,
                         };
-                        this.columns.push(elm);
+                        this.columns.push('elm'+elm);
                     }
-                    console.log('this.columns 1st :', JSON.stringify(this.columns));
                 });
 
-                listOfFields.map(element => {
-                    if (element.type == 'picklist' || element.type == "picklist") {
-
-                    }
-                    console.log('this.columns 2nd :', JSON.stringify(this.columns));
-                });
+            })
+            .then(_ => {
                 //this.columns = items;
                 console.log('this.columns: Final', JSON.stringify(this.columns));
                 console.log('this.allData:', JSON.parse(JSON.stringify(this.allData)));
@@ -112,7 +154,6 @@ export default class AccountDatatable extends LightningElement {
                 console.log('this.error', this.error);
                 this.allData = undefined;
             });
-
     }
 
     // async call for piclist
