@@ -4,7 +4,7 @@
  * @Author             :
  * @Group              :
  * @Last Modified By   : Vrushabh Uprikar
- * @Last Modified On   : 29-07-2021
+ * @Last Modified On   : 03-08-2021
  * @Modification Log   :
  * Ver       Date            Author      		    Modification
  * 1.0    (DD-MM-YYYY)                               Initial Version
@@ -17,7 +17,6 @@ import setSObjectRecords from '@salesforce/apex/picklistDatatableEditContoller.s
 
 import { refreshApex } from '@salesforce/apex';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
-import getPicklistOptions from '@salesforce/apex/AccountControllerEdit.getPicklistOptions';
 
 //  const column=[
 //      { "label" : "Name", "apiName" : "Name" ,"fieldType":"text","objectName":"Account", "fieldName": "Name", editable: true },
@@ -65,47 +64,24 @@ export default class AccountDatatable extends LightningElement {
             strObjectApiName: this.SFDCobjectApiName,
             strfieldSetName: this.fieldSetName
         })
-            .then(data => {
+            .then(async data => {
 
                 let objStr = JSON.parse(data);
 
-                let listOfFields = JSON.parse(Object.values(objStr)[1]);
-
+                let listOfFields = JSON.parse(Object.values(objStr)[2]);
+                console.log('listOfFields:', JSON.stringify(listOfFields)); // Fields
                 //retrieve listOfRecords from the map
-                var listOfRecords = JSON.parse(Object.values(objStr)[0]);
+                var listOfRecords = JSON.parse(Object.values(objStr)[1]);
+                console.log('listOfRecords:', JSON.stringify(listOfRecords)); // Data
+                // piclist values
+                var pickListValues = JSON.parse(Object.values(objStr)[0]); // Piclist
+                console.log('pickListValues:', JSON.stringify(pickListValues));
+                var xx = JSON.stringify(listOfRecords);
+                this.allData = JSON.parse(xx);
+                this.allDataOrgCopy = JSON.parse(xx);
 
                 listOfFields.map(element => {
-                    if (element.type == 'picklist' || element.type == "picklist") {
-                        getPicklistOptions({ objectApiName: this.SFDCobjectApiName, fieldApiName: element.fieldPath })
-                            .then(resp => {
-                                var colJson =
-                                {
-                                    fieldName: element.fieldPath,
-                                    label: element.label,
-                                    type: element.type,
-                                    editable: true,
-                                    cellAttributes: { alignment: 'center' },
-                                    typeAttributes: {
-                                        placeholder: element.label,
-                                        options: resp,
-                                        value: {
-                                            fieldName: element.fieldPath
-                                        },
-                                        context: { fieldName: 'Id' },
-                                        apiname: element.fieldPath
-                                    },
-                                    wrapText: true
-                                };
-
-                                this.columns.push(colJson);
-                                console.log(' this.columns' + JSON.stringify(this.columns));
-                            })
-                            .catch(error => {
-                                this.error = reduceErrors(error);
-                                console.log('this.error', this.error);
-                            });
-
-                    } else {
+                    if (element.type != 'picklist' || element.type != "picklist") {
                         let elm = {
                             label: element.label,
                             apiName: element.fieldPath,
@@ -117,13 +93,17 @@ export default class AccountDatatable extends LightningElement {
                         };
                         this.columns.push(elm);
                     }
-                    console.log('this.columns Inner :', JSON.stringify(this.columns));
+                    console.log('this.columns 1st :', JSON.stringify(this.columns));
                 });
-                var xx = JSON.stringify(listOfRecords);
-                this.allData = JSON.parse(xx);
-                this.allDataOrgCopy = JSON.parse(xx);
+
+                listOfFields.map(element => {
+                    if (element.type == 'picklist' || element.type == "picklist") {
+
+                    }
+                    console.log('this.columns 2nd :', JSON.stringify(this.columns));
+                });
                 //this.columns = items;
-                console.log('this.columns:Outer', JSON.stringify(this.columns));
+                console.log('this.columns: Final', JSON.stringify(this.columns));
                 console.log('this.allData:', JSON.parse(JSON.stringify(this.allData)));
                 this.error = undefined;
             })
@@ -134,6 +114,42 @@ export default class AccountDatatable extends LightningElement {
             });
 
     }
+
+    // async call for piclist
+
+    //  getPickLisHandleAsync(element)
+    // {
+    //     getPicklistOptions({ objectApiName: this.SFDCobjectApiName,
+    //         fieldApiName: element.fieldPath })
+    //         .then( async resp => {
+    //             var colJson =
+    //             {
+    //                 fieldName: element.fieldPath,
+    //                 label: element.label,
+    //                 type: element.type,
+    //                 editable: true,
+    //                 cellAttributes: { alignment: 'center' },
+    //                 typeAttributes: {
+    //                     placeholder: element.label,
+    //                     options: resp,
+    //                     value: {
+    //                         fieldName: element.fieldPath
+    //                     },
+    //                     context: { fieldName: 'Id' },
+    //                     apiname: element.fieldPath
+    //                 },
+    //                 wrapText: true
+    //             };
+    //             console.log(' colJson ' + JSON.stringify(colJson));
+    //             this.columns.push(colJson);
+    //         })
+    //         .catch(error => {
+    //             this.error = reduceErrors(error);
+    //             console.log('this.error', this.error);
+    //         });
+    // }
+
+
 
     // Picklist change code start Here
     picklistChanged(event) {
