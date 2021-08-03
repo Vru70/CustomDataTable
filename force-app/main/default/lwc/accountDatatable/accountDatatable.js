@@ -13,7 +13,7 @@ import { LightningElement, wire, track, api } from 'lwc';
 
 import { reduceErrors } from 'c/ldsUtils';
 import getFieldSetAndRecords from '@salesforce/apex/picklistDatatableEditContoller.getFieldSetAndRecords';
-import setSObjectRecords from '@salesforce/apex/picklistDatatableEditContoller.setSObjectRecords';
+import upsertSOBJRecord from '@salesforce/apex/picklistDatatableEditContoller.upsertSOBJRecord';
 
 import { refreshApex } from '@salesforce/apex';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
@@ -39,6 +39,7 @@ export default class AccountDatatable extends LightningElement {
     @api fieldSetName;
 
     fieldName;
+    listOfFieldsCopy = [];
 
     /*records=[];
     wiredRecords;
@@ -59,8 +60,7 @@ export default class AccountDatatable extends LightningElement {
     }*/
 
 
-    connectedCallback()
-    {
+    connectedCallback() {
         getFieldSetAndRecords({
             strObjectApiName: this.SFDCobjectApiName,
             strfieldSetName: this.fieldSetName
@@ -70,6 +70,7 @@ export default class AccountDatatable extends LightningElement {
                 let objStr = JSON.parse(data);
 
                 let listOfFields = JSON.parse(Object.values(objStr)[2]);
+                this.listOfFieldsCopy = listOfFields;
                 console.log('listOfFields:', JSON.stringify(listOfFields)); // Fields
 
                 var listOfRecords = JSON.parse(Object.values(objStr)[1]);
@@ -90,13 +91,11 @@ export default class AccountDatatable extends LightningElement {
 
                 await listOfFields.map(element => {
 
-                    if (element.type == 'picklist' || element.type == "picklist")
-                    {
+                    if (element.type == 'picklist' || element.type == "picklist") {
                         let opt = []; // options
                         pickListValues.forEach(pic => {
                             pic.forEach(elem => {
-                                if (element.fieldPath == elem.fieldApi)
-                                {
+                                if (element.fieldPath == elem.fieldApi) {
                                     let var1 =
                                     {
                                         value: elem.value,
@@ -133,8 +132,7 @@ export default class AccountDatatable extends LightningElement {
                         this.columns.push(colJson);
                         console.log('colJson:', colJson);
 
-                    } else
-                     {
+                    } else {
                         let elm = {
                             label: element.label,
                             apiName: element.fieldPath,
@@ -165,40 +163,6 @@ export default class AccountDatatable extends LightningElement {
     }
 
     // async call for piclist
-
-    //  getPickLisHandleAsync(element)
-    // {
-    //     getPicklistOptions({ objectApiName: this.SFDCobjectApiName,
-    //         fieldApiName: element.fieldPath })
-    //         .then( async resp => {
-    //             var colJson =
-    //             {
-    //                 fieldName: element.fieldPath,
-    //                 label: element.label,
-    //                 type: element.type,
-    //                 editable: true,
-    //                 cellAttributes: { alignment: 'center' },
-    //                 typeAttributes: {
-    //                     placeholder: element.label,
-    //                     options: resp,
-    //                     value: {
-    //                         fieldName: element.fieldPath
-    //                     },
-    //                     context: { fieldName: 'Id' },
-    //                     apiname: element.fieldPath
-    //                 },
-    //                 wrapText: true
-    //             };
-    //             console.log(' colJson ' + JSON.stringify(colJson));
-    //             this.columns.push(colJson);
-    //         })
-    //         .catch(error => {
-    //             this.error = reduceErrors(error);
-    //             console.log('this.error', this.error);
-    //         });
-    // }
-
-
 
     // Picklist change code start Here
     picklistChanged(event) {
@@ -239,7 +203,7 @@ export default class AccountDatatable extends LightningElement {
         var updatedField = event.detail.draftValues;
         // const updatedField2 = this.updatedFields;
         console.log('updatedField' + JSON.stringify(updatedField));
-        setSObjectRecords({ fieldData: JSON.stringify(updatedField), SFDCobjectApiName: this.SFDCobjectApiName })
+        upsertSOBJRecord({ fieldData: JSON.stringify(updatedField), SFDCobjectApiName: this.SFDCobjectApiName })
             .then(result => {
 
                 console.log(JSON.stringify("Apex update result: " + result));
@@ -286,12 +250,31 @@ export default class AccountDatatable extends LightningElement {
     }
     // Add row button logic
     addRow() {
-        this.acc.Id = this.keyIndex;
-        ++this.keyIndex;
-        console.log(this.keyIndex);
-        var newdata = JSON.parse(JSON.stringify(this.acc));
-        var newdata2 = [newdata, ...this.records];
-        this.records = newdata2;
+        console.log("add row function called");
+        var dynamicArray = this.listOfFieldsCopy;
+        console.log('dynamicArray:', dynamicArray);
+        var blankObj =
+        {
+            Id: "",
+            attributes:
+            {
+                type: this.SFDCobjectApiName,
+                url: "",
+            },
+
+        };
+        // dynamicArray.forEach(obj=>{
+        //     blankObj[obj.fieldPath] ='';
+        // });
+
+        for (let i = 0; i < dynamicArray.length; i++) {
+            const { fieldPath } = dynamicArray[i];
+            blankObj[fieldPath] = "";
+        }
+        console.log("blank_object", JSON.stringify(blankObj));
+        //this.allData.unshift(JSON.parse(JSON.stringify(blankObj)));
+        this.allData = [blankObj, ...this.allData];
+        console.log('this.allData After :', JSON.parse(JSON.stringify(this.allData)));
     }
 
 }
