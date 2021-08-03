@@ -114,18 +114,24 @@ export default class AccountDatatable extends LightningElement {
                             type: element.type,
                             editable: true,
                             cellAttributes: { alignment: 'center' },
-                            typeAttributes: {
+                            typeAttributes:
+                            {
                                 placeholder: element.label,
                                 options: opt,
-                                value: {
+                                value:
+                                {
                                     fieldName: element.fieldPath
                                 },
                                 context: { fieldName: 'Id' },
-                                apiname: element.fieldPath
+                                apiname: element.fieldPath,
+                                variant: 'label-hidden',
+                                name: element.label,
+                                label: element.label
                             },
                             wrapText: true
                         };
-                        this.columns.push('colJson'+colJson);
+                        this.columns.push(colJson);
+                        console.log('colJson:', colJson);
 
                     } else
                      {
@@ -138,14 +144,16 @@ export default class AccountDatatable extends LightningElement {
                             fieldName: element.fieldPath,
                             editable: true,
                         };
-                        this.columns.push('elm'+elm);
+                        this.columns.push(elm);
+                        console.log('elm:', elm);
                     }
                 });
 
             })
             .then(_ => {
-                //this.columns = items;
-                console.log('this.columns: Final', JSON.stringify(this.columns));
+                var parseCol = JSON.stringify(this.columns);
+                this.columns = JSON.parse(parseCol);
+                console.table(this.columns);
                 console.log('this.allData:', JSON.parse(JSON.stringify(this.allData)));
                 this.error = undefined;
             })
