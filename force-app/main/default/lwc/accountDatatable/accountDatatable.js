@@ -4,7 +4,7 @@
  * @Author             :
  * @Group              :
  * @Last Modified By   : Vrushabh Uprikar
- * @Last Modified On   : 03-08-2021
+ * @Last Modified On   : 04-08-2021
  * @Modification Log   :
  * Ver       Date            Author      		    Modification
  * 1.0    (DD-MM-YYYY)                               Initial Version
@@ -66,7 +66,7 @@ export default class AccountDatatable extends LightningElement {
             strfieldSetName: this.fieldSetName
         })
             .then(async data => {
-
+                this.isLoading = true;
                 let objStr = JSON.parse(data);
 
                 let listOfFields = JSON.parse(Object.values(objStr)[2]);
@@ -162,14 +162,13 @@ export default class AccountDatatable extends LightningElement {
             });
     }
 
-    // async call for piclist
-
     // Picklist change code start Here
-    picklistChanged(event) {
+    picklistChanged(event)
+    {
         try {
             // collect values of piclist and update it to draft value
             let dataRecieved = JSON.parse(JSON.stringify(event.detail.data));
-            console.log('Picklist Change Data : ', dataRecieved);
+            console.log('Picklist Change Data : 1', dataRecieved);
             let fieldApiName = dataRecieved.apiname;
             let ObjectIndex;
             ObjectIndex = this.records.findIndex(Item => { return Item.Id === dataRecieved.context });
@@ -199,11 +198,12 @@ export default class AccountDatatable extends LightningElement {
     }
 
     // Handlsave event to save Edit draftvalues and Record Insert save button
-    handleSave(event) {
+    async handleSave(event)
+    {
         var updatedField = event.detail.draftValues;
         // const updatedField2 = this.updatedFields;
         console.log('updatedField' + JSON.stringify(updatedField));
-        upsertSOBJRecord({ fieldData: JSON.stringify(updatedField), SFDCobjectApiName: this.SFDCobjectApiName })
+        await upsertSOBJRecord({ jSONSObject: JSON.stringify(updatedField), sObjectApiName: this.SFDCobjectApiName })
             .then(result => {
 
                 console.log(JSON.stringify("Apex update result: " + result));
@@ -241,12 +241,7 @@ export default class AccountDatatable extends LightningElement {
 
     }
     handleCellChange(event) {
-        console.log('draft val' + JSON.stringify(event.detail.draftValues));
-        // this.acc2["Name"] = event.detail.draftValues[0]["Name"] != undefined ? event.detail.draftValues[0]["Name"] : this.acc2["Name"];
-        // this.acc2["Phone"] = event.detail.draftValues[0]["Phone"] != undefined ? event.detail.draftValues[0]["Phone"] : this.acc2["Phone"];
-        // this.acc2["Fax"] = event.detail.draftValues[0]["Fax"] != undefined ? event.detail.draftValues[0]["Fax"] : this.acc2["Fax"];
-
-        // console.log(this.acc2);
+        console.log('draft val @oncellchange' + JSON.stringify(event.detail.draftValues));
     }
     // Add row button logic
     addRow() {

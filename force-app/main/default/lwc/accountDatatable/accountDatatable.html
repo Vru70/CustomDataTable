@@ -1,26 +1,32 @@
 <!--
   @author            : Vrushabh Uprikar
-  @last modified on  : 29-07-2021
+  @last modified on  : 04-08-2021
   @last modified by  : Vrushabh Uprikar
 -->
 <template>
-    <lightning-card>
-      <div class="slds-p-left_medium">
-            <lightning-button  label="Add" variant="brand" onclick={addRow}
-                              class="slds-float_left">
-            </lightning-button>&nbsp;
-      </div>
+  <lightning-card>
+    <template if:false={isLoading}>
       <div class="slds-m-around_medium">
-        <c-extended-datatable
-          key-field="Id"
-          data={allData}
-          columns={columns}
-          hide-checkbox-column
-          draft-values={draftValues}
-          onsave={handleSave}
-          oncellchange={handleCellChange}
-          onpicklistchanged={picklistChanged}>
-        </c-extended-datatable>
-      </div>
-    </lightning-card>
+          <lightning-spinner
+              alternative-text="Loading..." variant="brand"></lightning-spinner>
+        </div>
+      </template>
+    <div class="slds-p-left_medium">
+          <lightning-button  label="Add" variant="brand" onclick={addRow}
+                            class="slds-float_left">
+          </lightning-button>&nbsp;
+    </div>
+    <div class="slds-m-around_medium">
+      <c-extended-datatable
+        key-field="Id"
+        data={allData}
+        columns={columns}
+        hide-checkbox-column
+        draft-values={draftValues}
+        onsave={handleSave}
+        oncellchange={handleCellChange}
+        onpicklistchanged={picklistChanged}>
+      </c-extended-datatable>
+    </div>
+  </lightning-card>
 </template>

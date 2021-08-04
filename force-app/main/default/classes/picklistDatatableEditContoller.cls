@@ -1,6 +1,6 @@
 /**
  * @author            : Vrushabh Uprikar
- * @last modified on  : 03-08-2021
+ * @last modified on  : 04-08-2021
  * @last modified by  : Vrushabh Uprikar
 **/
 public with sharing class picklistDatatableEditContoller
@@ -44,16 +44,41 @@ public with sharing class picklistDatatableEditContoller
 
 
     @AuraEnabled
-    public static String upsertSOBJRecord(String fieldData, String SFDCobjectApiName)
+    public static String upsertSOBJRecord(String jSONSObject, String sObjectApiName)
     {
-        Type objtype = Type.forName(SFDCobjectApiName);                               // Eg., conatct
-        if(!String.isEmpty(fieldData) && !String.isEmpty(SFDCobjectApiName))
+        Map<String, Object> fieldMap = (Map<String, Object>)JSON.deserializeUntyped(jSONSObject);
+        Schema.SObjectType targetType = Schema.getGlobalDescribe().get(sObjectApiName);
+        SObject newSobject = targetType.newSObject();
+        Map<String, Schema.sObjectField> targetFields = targetType.getDescribe().fields.getMap();
+        for (String key : fieldMap.keySet())
         {
-            SObject sObj = (SObject)JSON.deserialize(fieldData, objtype);
-            System.debug('fieldData : '+fieldData);                                    // '{\"id\":\"0032w00000X6KgxAAF\",\"FirstName\":\"SonuTest1\"}'
-            try
+            Object value = fieldMap.get(key);
+            Schema.DisplayType valueType = targetFields.get(key).getDescribe().getType();
+            if (value instanceof String && valueType != Schema.DisplayType.String)
             {
-                upsert sObj;
+                String svalue = (String)value;
+                if (valueType == Schema.DisplayType.Date)
+                    newSobject.put(key, Date.valueOf(svalue));
+                else if(valueType == Schema.DisplayType.DateTime)
+                    newSobject.put(key, DateTime.valueOfGmt(svalue));
+                else if (valueType == Schema.DisplayType.Percent || valueType == Schema.DisplayType.Currency)
+                    newSobject.put(key, svalue == '' ? null : Decimal.valueOf(svalue));
+                else if (valueType == Schema.DisplayType.Double)
+                    newSobject.put(key, svalue == '' ? null : Double.valueOf(svalue));
+                else if (valueType == Schema.DisplayType.Integer)
+                    newSobject.put(key, Integer.valueOf(svalue));
+                else if (valueType == Schema.DisplayType.Base64)
+                    newSobject.put(key, Blob.valueOf(svalue));
+                else
+                    newSobject.put(key, svalue);
+            }
+            else
+                newSobject.put(key, value);
+        }
+
+        try
+            {
+                upsert newSobject;
                 System.debug(' ::Success:: ');
                 return 'Success';
             } catch(Exception e)
@@ -61,8 +86,6 @@ public with sharing class picklistDatatableEditContoller
                 System.debug('Error in Update : '+e.getMessage());
                 return ''+e.getMessage();
             }
-        }
-        return 'Something Went Wrong';
     }
 
     public static List<PickListWrap> getPicklistOptions(String objectApiName, String fieldApiName)
@@ -98,7 +121,6 @@ public with sharing class picklistDatatableEditContoller
         	this.value = value;
             this.label = label;
             this.fieldApi = fieldApi;
-
         }
     }
 }
