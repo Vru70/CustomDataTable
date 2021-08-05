@@ -1,6 +1,6 @@
 /**
  * @author            : Vrushabh Uprikar
- * @last modified on  : 04-08-2021
+ * @last modified on  : 05-08-2021
  * @last modified by  : Vrushabh Uprikar
 **/
 public with sharing class picklistDatatableEditContoller
@@ -36,12 +36,10 @@ public with sharing class picklistDatatableEditContoller
             returnMap.put('FIELD_LIST', JSON.serialize(lstFSMember));
             returnMap.put('RECORD_LIST', JSON.serialize(lstRecords));
             returnMap.put('PICKVAL_LIST', JSON.serialize(piclist));
-
             return JSON.serialize(returnMap);
         }
         return null; // will return null if ObjectApi and FieldSet not found
     }
-
 
     @AuraEnabled
     public static String upsertSOBJRecord(String jSONSObject, String sObjectApiName)
@@ -75,7 +73,6 @@ public with sharing class picklistDatatableEditContoller
             else
                 newSobject.put(key, value);
         }
-
         try
             {
                 upsert newSobject;
@@ -122,5 +119,19 @@ public with sharing class picklistDatatableEditContoller
             this.label = label;
             this.fieldApi = fieldApi;
         }
-    }
+}
+
+    @AuraEnabled
+	public static string updateAccounts(Object data) {
+    //Schema.SObjectType sObjectType = data.getSObjectType();
+    //String listType = 'List<' + sObjectType + '>';
+    List<Account> accountsForUpdate = (List<Account>)JSON.deserialize(JSON.serialize(data),List<Account>.class);
+    try {
+        upsert accountsForUpdate;
+        return 'Success: account updated successfully';
+    	}
+    catch (Exception e) {
+        return 'The following exception has occurred: ' + e.getMessage();
+    	}
+	}
 }
