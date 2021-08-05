@@ -36,10 +36,12 @@ public with sharing class picklistDatatableEditContoller
             returnMap.put('FIELD_LIST', JSON.serialize(lstFSMember));
             returnMap.put('RECORD_LIST', JSON.serialize(lstRecords));
             returnMap.put('PICKVAL_LIST', JSON.serialize(piclist));
+
             return JSON.serialize(returnMap);
         }
         return null; // will return null if ObjectApi and FieldSet not found
     }
+
 
     @AuraEnabled
     public static String upsertSOBJRecord(String jSONSObject, String sObjectApiName)
@@ -73,6 +75,7 @@ public with sharing class picklistDatatableEditContoller
             else
                 newSobject.put(key, value);
         }
+
         try
             {
                 upsert newSobject;
@@ -118,13 +121,14 @@ public with sharing class picklistDatatableEditContoller
         	this.value = value;
             this.label = label;
             this.fieldApi = fieldApi;
+
         }
-}
+    }
 
     @AuraEnabled
 	public static string updateAccounts(Object data) {
-    //Schema.SObjectType sObjectType = data.getSObjectType();
-    //String listType = 'List<' + sObjectType + '>';
+    //Schema.SObjectType sObjectType = Schema.getGlobalDescribe().get(sObjectApiName);
+    //String ListType = 'List<' + sObjectType + '>';
     List<Account> accountsForUpdate = (List<Account>)JSON.deserialize(JSON.serialize(data),List<Account>.class);
     try {
         upsert accountsForUpdate;

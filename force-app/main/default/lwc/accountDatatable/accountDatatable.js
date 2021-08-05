@@ -30,22 +30,10 @@ export default class AccountDatatable extends LightningElement {
     fieldName;
     listOfFieldsCopy = [];
     draftValues = [];
-    /*records=[];
-    wiredRecords;
-    error;
-    keyIndex = 0;
-    picklistval;
-    updatedFields=[]
-    //Json to insert new row in Datatable
-    acc = {
-        Id: 0,
-        Name: "",
-        Phone:"",
-        Fax: "",
-        Industry: "",
-    }*/
-    connectedCallback() {
 
+    @track picklistPushVal = [];
+
+    connectedCallback() {
         getFieldSetAndRecords({
             strObjectApiName: this.SFDCobjectApiName,
             strfieldSetName: this.fieldSetName
@@ -141,21 +129,52 @@ export default class AccountDatatable extends LightningElement {
     }
     // async call for piclist
     // Picklist change code start Here
-    picklistChanged(event)
-    {
+    picklistChanged(event) {
         try {
             // collect values of piclist and update it to draft value
             let dataRecieved = JSON.parse(JSON.stringify(event.detail.data));
             console.log('Picklist Change Data : ', dataRecieved);
             let picKlistdata = {
-                Id:dataRecieved.context,
-                [dataRecieved.apiname]:dataRecieved.value
+                Id: dataRecieved.context,
+                [dataRecieved.apiname]: dataRecieved.value
             };
-            this.draftValues.push(picKlistdata);
+            if (picKlistdata.Id.length > 15)
+            {
+                let vardata = [...picKlistdata];
+                updateAccounts({ data: vardata })
+                    .then(() => {
+                        this.dispatchEvent(
+                            new ShowToastEvent({
+                                title: 'Success',
+                                message: 'Account updated',
+                                variant: 'success'
+                            })
+                        );
+                        this.picklistPushVal = [];
+                        this.draftValues = [];
+                        // Display fresh data in the datatable
+                        // return refreshApex(this.contact).then(() => {​
+                        //     // Clear all draft values in the datatable
+                        //     this.draftValues = [];// });
+                    }).then(_ => {
+                        console.log('Sucsss:');
+                    })
+                    .catch(error => {
+                        this.dispatchEvent(
+                            new ShowToastEvent({
+                                title: 'Error updating or reloading record',
+                                message: error.body.message,
+                                variant: 'error'
+                            })
+                        );
+                    });
+            }
+            this.picklistPushVal.push(picKlistdata);
         } catch (error) {
             console.log(error);
         }
     }
+
     updateDraftValues(updateItem) {
         // let records = JSON.parse(JSON.stringify(this.records));
         let findObjIndex = this.records.findIndex((arrItem, ind) => {
@@ -175,11 +194,40 @@ export default class AccountDatatable extends LightningElement {
     // Handlsave event to save Edit draftvalues and Record Insert save button
     handleSave(event) {
         var updatedField = event.detail.draftValues;
-        console.log('draft val on handelSave' + JSON.stringify(event.detail.draftValues));
+
+        for (let i = 0; i < updatedField.length; i++) {
+            if (updatedField[i].Id.length < 10) {
+                updatedField[i].Id = '00';
+            }
+        }
+
         console.log('updatedField' + JSON.stringify(updatedField));
-        this.getAlldata(updatedField);
-        //const recordInput = {updatedField};
-        updateAccounts({ data: updatedField })
+
+        for (let j = 0; j < this.picklistPushVal.length; j++) {
+            if (this.picklistPushVal[j].Id.length < 10) {
+                this.picklistPushVal[j].Id = '00';
+            }
+        }
+        console.log('picklistPushVal' + JSON.stringify(this.picklistPushVal));
+
+        let mergedField = updatedField.map(fields =>
+        {
+            let otherFields = this.picklistPushVal.find(element =>
+            {
+                element.Id === fields.Id
+            });
+            console.log('otherFields:', otherFields);
+            return { ...fields, ...otherFields };
+        });
+        console.log('mergedField1' + JSON.stringify(mergedField));
+        mergedField.forEach(del => {
+            if (del.Id.length <= 10) {
+                delete del.Id;
+            }
+        });
+
+        console.log('mergedField2' + JSON.stringify(mergedField));
+        updateAccounts({ data: mergedField })
             .then(() => {
                 this.dispatchEvent(
                     new ShowToastEvent({
@@ -187,12 +235,18 @@ export default class AccountDatatable extends LightningElement {
                         message: 'Account updated',
                         variant: 'success'
                     })
+
                 );
+                this.picklistPushVal = [];
+                this.draftValues = [];
                 // Display fresh data in the datatable
                 // return refreshApex(this.contact).then(() => {​
                 //     // Clear all draft values in the datatable
                 //     this.draftValues = [];// });
-            }).catch(error => {
+            }).then(_ => {
+                console.log('Sucsss:');
+            })
+            .catch(error => {
                 this.dispatchEvent(
                     new ShowToastEvent({
                         title: 'Error updating or reloading record',
@@ -202,14 +256,11 @@ export default class AccountDatatable extends LightningElement {
                 );
             });
     }
-    handleCellChange(event)
-    {
-        var All_Draft=[];
+    handleCellChange(event) {
+        var All_Draft = [];
         console.log('draft val nnn' + JSON.stringify(event.detail.draftValues));
         let draft_val = event.detail.draftValues;
-
     }
-
     addRow() {
         console.log("add row function called");
         var dynamicArray = this.listOfFieldsCopy;
@@ -231,13 +282,8 @@ export default class AccountDatatable extends LightningElement {
             blankObj[fieldPath] = "";
         }
         console.log("blank_object", JSON.stringify(blankObj));
-        //this.allData.unshift(JSON.parse(JSON.stringify(blankObj)));
+
         this.allData = [blankObj, ...this.allData];
         console.log('this.allData After :', JSON.parse(JSON.stringify(this.allData)));
-    }
-
-    getAlldata(data)
-    {
-
     }
 }
