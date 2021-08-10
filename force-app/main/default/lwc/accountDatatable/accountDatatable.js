@@ -1,10 +1,11 @@
 /**
  * @author            : Vrushabh Uprikar
- * @last modified on  : 06-08-2021
+ * @last modified on  : 10-08-2021
  * @last modified by  : Vrushabh Uprikar
 **/
 import { LightningElement, wire, track, api } from 'lwc';
 import { reduceErrors } from 'c/ldsUtils';
+import { getRecordNotifyChange } from 'lightning/uiRecordApi';
 import getFieldSetAndRecords from '@salesforce/apex/picklistDatatableEditContoller.getFieldSetAndRecords';
 import upsertSOBJRecord from '@salesforce/apex/picklistDatatableEditContoller.upsertSOBJRecord';
 import { refreshApex } from '@salesforce/apex';
@@ -30,6 +31,7 @@ export default class AccountDatatable extends LightningElement {
     fieldName;
     listOfFieldsCopy = [];
     draftValues = [];
+    increment = 0;
 
     @track picklistPushVal = [];
 
@@ -137,39 +139,24 @@ export default class AccountDatatable extends LightningElement {
             Id: dataRecieved.context,
             [dataRecieved.apiname]: dataRecieved.value
         };
+        if (picklistObj.Id < 15 || picklistObj.Id == '') {
+            picklistObj.Id = 'row-0'; // need dynamic
+        }
         this.updateDraftValues(picklistObj);
-
     }
 
     // Handlsave event to save Edit draftvalues and Record Insert save button
     async handleSave(event) {
-        let pushdata = async () => {
-            let draftValueChanged = false;
-            let copyDraftValues = JSON.parse(JSON.stringify(this.draftValues));
-            await copyDraftValues.forEach((item) => {
-                if (item.Id.length < 15) {
-                    item.Id = '';
-                }
-            });
-            await copyDraftValues.forEach((item) => {
-                if (item.Id == updateItem.Id) {
-                    for (let field in updateItem) {
-                        item[field] = updateItem[field];
-                    }
-                    draftValueChanged = true;
-                }
-            });
-
-            if (draftValueChanged) {
-                return [...copyDraftValues];
-            } else {
-                return [...copyDraftValues, updateItem];
+        let copyDraftValues = this.draftValues;
+        copyDraftValues.forEach((item) => {
+            if (item.Id.length < 15) {
+                // item.Id = '';
+                delete item.Id;
             }
-
-        }
-
-        console.log('pushdata: ', JSON.stringify(pushdata));
-        updateAccounts({ data: this.draftValues })
+        });
+        const notifyChangeIds = copyDraftValues.map(row => { return { "recordId": row.Id } });
+        console.log('FINAL PUSH : ', JSON.stringify(copyDraftValues));
+        updateAccounts({ data: copyDraftValues })
             .then(() => {
                 this.dispatchEvent(
                     new ShowToastEvent({
@@ -180,8 +167,8 @@ export default class AccountDatatable extends LightningElement {
                 );
                 this.draftValues = [];
             }).then(_ => {
-                console.log('Sucsss: Saved value' + this.draftValues);
-
+                console.log('Sucsss: Saved value' + JSON.stringify(copyDraftValues));
+                getRecordNotifyChange(notifyChangeIds);
             })
             .catch(error => {
                 this.dispatchEvent(
@@ -203,7 +190,13 @@ export default class AccountDatatable extends LightningElement {
     async updateDraftValues(updateItem) {
         let draftValueChanged = false;
         let copyDraftValues = JSON.parse(JSON.stringify(this.draftValues));
-
+        /* await copyDraftValues.forEach((item) => {
+             if (item.Id.length < 15 || item.Id == '') {
+                 item.Id = 'row-0';
+                 //delete item.Id;
+             }
+         });*/
+        console.log('Draft values on send:', JSON.stringify(copyDraftValues));
         await copyDraftValues.forEach((item) => {
             if (item.Id == updateItem.Id) {
                 for (let field in updateItem) {

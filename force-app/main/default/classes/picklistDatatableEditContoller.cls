@@ -1,6 +1,6 @@
 /**
  * @author            : Vrushabh Uprikar
- * @last modified on  : 05-08-2021
+ * @last modified on  : 10-08-2021
  * @last modified by  : Vrushabh Uprikar
 **/
 public with sharing class picklistDatatableEditContoller
@@ -29,7 +29,7 @@ public with sharing class picklistDatatableEditContoller
                 }
             }
             query += 'Id FROM ' + strObjectApiName ;
-            query += ' LIMIT 10 ';
+            query += ' order by CreatedDate desc LIMIT 10 ';
 	        //execute query
             List<SObject> lstRecords = Database.query(query);
             //prepare a map which will hold fieldList and recordList and return it
