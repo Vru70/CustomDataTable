@@ -31,7 +31,7 @@ export default class AccountDatatable extends LightningElement {
     fieldName;
     listOfFieldsCopy = [];
     draftValues = [];
-    increment = 0;
+    AddButonCounter = 0;
 
     @track picklistPushVal = [];
 
@@ -139,12 +139,11 @@ export default class AccountDatatable extends LightningElement {
             Id: dataRecieved.context,
             [dataRecieved.apiname]: dataRecieved.value
         };
-        if (picklistObj.Id < 15 || picklistObj.Id == '') {
+       /* if (picklistObj.Id < 15 || picklistObj.Id == '') {
             picklistObj.Id = 'row-0'; // need dynamic
-        }
+        }*/
         this.updateDraftValues(picklistObj);
     }
-
     // Handlsave event to save Edit draftvalues and Record Insert save button
     async handleSave(event) {
         let copyDraftValues = this.draftValues;
@@ -213,6 +212,7 @@ export default class AccountDatatable extends LightningElement {
         }
 
         console.log('UpdateddraftValues :', JSON.stringify(this.draftValues));
+        console.log('this.allData After Draft:', JSON.parse(JSON.stringify(this.allData)));
     }
 
     addRow() {
@@ -222,7 +222,7 @@ export default class AccountDatatable extends LightningElement {
         console.log('dynamicArray:', dynamicArray);
         var blankObj =
         {
-            Id: "",
+            Id: "row-"+this.AddButonCounter,
             attributes:
             {
                 type: this.SFDCobjectApiName,
@@ -238,5 +238,7 @@ export default class AccountDatatable extends LightningElement {
 
         this.allData = [blankObj, ...this.allData];
         console.log('this.allData After :', JSON.parse(JSON.stringify(this.allData)));
+        this.AddButonCounter = this.AddButonCounter + 1;
     }
+
 }
