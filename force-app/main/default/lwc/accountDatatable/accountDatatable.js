@@ -1,6 +1,6 @@
 /**
  * @author            : Vrushabh Uprikar
- * @last modified on  : 10-08-2021
+ * @last modified on  : 11-08-2021
  * @last modified by  : Vrushabh Uprikar
 **/
 import { LightningElement, wire, track, api } from 'lwc';
@@ -8,14 +8,8 @@ import { reduceErrors } from 'c/ldsUtils';
 import { getRecordNotifyChange } from 'lightning/uiRecordApi';
 import getFieldSetAndRecords from '@salesforce/apex/picklistDatatableEditContoller.getFieldSetAndRecords';
 import upsertSOBJRecord from '@salesforce/apex/picklistDatatableEditContoller.upsertSOBJRecord';
-import { refreshApex } from '@salesforce/apex';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
-import updateAccounts from '@salesforce/apex/picklistDatatableEditContoller.updateAccounts';
-//  const column=[
-//      { "label" : "Name", "apiName" : "Name" ,"fieldType":"text","objectName":"Account", "fieldName": "Name", editable: true },
-//      { "label" : "Phone", "apiName" : "Phone" ,"fieldType":"text","type":"phone","objectName":"Account","fieldName": "Phone", editable: true },
-//      { "label" : "Total Spending", "apiName" : "Total_Spending__c" ,"fieldType":"text","objectName":"Account","fieldName": "Total_Spending__c", editable: true },
-//  ];
+
 export default class AccountDatatable extends LightningElement {
     @api isLoaded = false;
     @track allData = []; // Datatable
@@ -139,9 +133,6 @@ export default class AccountDatatable extends LightningElement {
             Id: dataRecieved.context,
             [dataRecieved.apiname]: dataRecieved.value
         };
-       /* if (picklistObj.Id < 15 || picklistObj.Id == '') {
-            picklistObj.Id = 'row-0'; // need dynamic
-        }*/
         this.updateDraftValues(picklistObj);
     }
     // Handlsave event to save Edit draftvalues and Record Insert save button
@@ -153,9 +144,10 @@ export default class AccountDatatable extends LightningElement {
                 delete item.Id;
             }
         });
-        const notifyChangeIds = copyDraftValues.map(row => { return { "recordId": row.Id } });
+        let dataStringify = JSON.stringify(copyDraftValues);
+
         console.log('FINAL PUSH : ', JSON.stringify(copyDraftValues));
-        updateAccounts({ data: copyDraftValues })
+        upsertSOBJRecord({ jSONSObject: dataStringify, sObjectApiName: this.SFDCobjectApiName })
             .then(() => {
                 this.dispatchEvent(
                     new ShowToastEvent({
@@ -164,10 +156,12 @@ export default class AccountDatatable extends LightningElement {
                         variant: 'success'
                     })
                 );
-                this.draftValues = [];
+
             }).then(_ => {
                 console.log('Sucsss: Saved value' + JSON.stringify(copyDraftValues));
+                this.draftValues = [];
                 getRecordNotifyChange(notifyChangeIds);
+
             })
             .catch(error => {
                 this.dispatchEvent(
@@ -189,12 +183,6 @@ export default class AccountDatatable extends LightningElement {
     async updateDraftValues(updateItem) {
         let draftValueChanged = false;
         let copyDraftValues = JSON.parse(JSON.stringify(this.draftValues));
-        /* await copyDraftValues.forEach((item) => {
-             if (item.Id.length < 15 || item.Id == '') {
-                 item.Id = 'row-0';
-                 //delete item.Id;
-             }
-         });*/
         console.log('Draft values on send:', JSON.stringify(copyDraftValues));
         await copyDraftValues.forEach((item) => {
             if (item.Id == updateItem.Id) {
@@ -222,7 +210,7 @@ export default class AccountDatatable extends LightningElement {
         console.log('dynamicArray:', dynamicArray);
         var blankObj =
         {
-            Id: "row-"+this.AddButonCounter,
+            Id: "row-" + this.AddButonCounter,
             attributes:
             {
                 type: this.SFDCobjectApiName,
