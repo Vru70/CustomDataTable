@@ -5,6 +5,33 @@
 **/
 public with sharing class picklistDatatableEditContoller
 {
+    @AuraEnabled
+    public static string getUpdatedDataOnly(String strObjectApiName, String strfieldSetName)
+    {
+        Map<String, String> returnMap = new Map<String,String>();
+        if(!String.isEmpty(strObjectApiName) && !String.isEmpty(strfieldSetName))
+        {
+            //get fields from FieldSet
+            SObject sObj = (SObject)(Type.forName('Schema.'+ strObjectApiName).newInstance()); //  Create new sObj
+            List<Schema.FieldSetMember> lstFSMember =
+                sObj.getSObjectType().getDescribe().fieldSets.getMap().get(strfieldSetName).getFields(); // Collecting all fields from fildSet
+            //prepare SOQL query based on fieldAPIs
+            String query = 'SELECT ';
+            for(Schema.FieldSetMember f : lstFSMember) //Use of Schema.FieldSetMember to get the fields from Field Set.
+            {
+                query += f.getFieldPath() + ', '; // getFieldPath() of FieldSetMember gives the fieldAPI which has been used to build SOQL query.
+            }
+            query += 'Id FROM ' + strObjectApiName ;
+            query += ' order by CreatedDate desc LIMIT 10 ';
+	        //execute query
+            List<SObject> lstRecords = Database.query(query);
+            //prepare a map which will hold fieldList and recordList and return it
+            returnMap.put('RECORD_LIST', JSON.serialize(lstRecords));
+            return JSON.serialize(returnMap);
+        }
+        return null; // will return null if ObjectApi and FieldSet not found
+    }
+
     @AuraEnabled(cacheable=false)
     public static String getFieldSetAndRecords(String strObjectApiName, String strfieldSetName)
     {
@@ -46,6 +73,7 @@ public with sharing class picklistDatatableEditContoller
     @AuraEnabled
     public static String upsertSOBJRecord(String jSONSObject, String sObjectApiName)
     {
+        Map<String, String> returnMap = new Map<String,String>();
         Schema.SObjectType targetType = Schema.getGlobalDescribe().get(sObjectApiName);
         List<Object> fieldList = (List<Object>)JSON.deserializeUntyped(jSONSObject);
         List<SObject> newSobjectList = new List<SObject>();

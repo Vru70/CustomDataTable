@@ -5,10 +5,10 @@
 **/
 import { LightningElement, wire, track, api } from 'lwc';
 import { reduceErrors } from 'c/ldsUtils';
-import { getRecordNotifyChange } from 'lightning/uiRecordApi';
 import getFieldSetAndRecords from '@salesforce/apex/picklistDatatableEditContoller.getFieldSetAndRecords';
 import upsertSOBJRecord from '@salesforce/apex/picklistDatatableEditContoller.upsertSOBJRecord';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import getUpdatedDataOnly from '@salesforce/apex/picklistDatatableEditContoller.getUpdatedDataOnly';
 
 export default class AccountDatatable extends LightningElement {
     @api isLoaded = false;
@@ -26,10 +26,11 @@ export default class AccountDatatable extends LightningElement {
     listOfFieldsCopy = [];
     draftValues = [];
     AddButonCounter = 0;
-
+    allValuesAndData;
     @track picklistPushVal = [];
 
     @track isNewRec = false;
+
     connectedCallback() {
         getFieldSetAndRecords({
             strObjectApiName: this.SFDCobjectApiName,
@@ -160,8 +161,7 @@ export default class AccountDatatable extends LightningElement {
             }).then(_ => {
                 console.log('Sucsss: Saved value' + JSON.stringify(copyDraftValues));
                 this.draftValues = [];
-                getRecordNotifyChange(notifyChangeIds);
-
+                this.getUpdatedData();
             })
             .catch(error => {
                 this.dispatchEvent(
@@ -229,4 +229,23 @@ export default class AccountDatatable extends LightningElement {
         this.AddButonCounter = this.AddButonCounter + 1;
     }
 
+    getUpdatedData() {
+        getUpdatedDataOnly({
+            strObjectApiName: this.SFDCobjectApiName,
+            strfieldSetName: this.fieldSetName
+        })
+            .then(async data => {
+
+                let objStr = JSON.parse(data);
+                var listOfRecords = JSON.parse(Object.values(objStr)[0]);
+                console.log('listOfRecords: UPDATED', JSON.stringify(listOfRecords)); // Data
+                var xx = JSON.stringify(listOfRecords);
+                this.allData = JSON.parse(xx);
+                this.allDataOrgCopy = JSON.parse(xx);
+            })
+            .catch(error => {
+                this.error = reduceErrors(error);
+                console.log('this.error', this.error);
+            });
+    }
 }
